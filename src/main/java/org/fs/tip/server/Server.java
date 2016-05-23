@@ -33,8 +33,10 @@ public class Server implements Runnable {
 		while(isRunning) {
 			Socket client = null;
 			try {
+				System.out.println("Wainting for client... ");
 				client = server.accept();
 				createChannelLisitMessage();
+				System.out.println("Sending channel list to client... ");
 				sendChannelListLength(client);
 				if(new String(getUserConfirmation(client)).equals("READY")) {
 					sendChannelList(client);
