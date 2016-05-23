@@ -1,6 +1,6 @@
-package org.fs.server;
+package org.fs.tip;
 
-public class App {
+public class Application {
 	public static void main(String[] args) {
 		
 	}
