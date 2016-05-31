@@ -6,10 +6,13 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import org.fs.tip.server.utils.Channel;
+
+import static java.util.Arrays.*;
 
 public class Server implements Runnable {
 	private ServerSocket server;
@@ -27,15 +30,13 @@ public class Server implements Runnable {
 
 	@Override
 	public void run() {
-		channels.forEach(channel -> {
-			exec.execute(channel);
-		});
+		channels.forEach(channel -> exec.execute(channel));
 		while(isRunning) {
 			Socket client = null;
 			try {
 				System.out.println("Wainting for client... ");
 				client = server.accept();
-				createChannelLisitMessage();
+				createChannelListMessage();
 				System.out.println("Sending channel list to client... ");
 				sendChannelListLength(client);
 				if(new String(getUserConfirmation(client)).equals("READY")) {
@@ -48,45 +49,39 @@ public class Server implements Runnable {
 		}
 	}
 
-	private void createChannelLisitMessage() {
-		channels.forEach(channel -> {channelListMessage.append(channel.getPort()).append("=").append(channel.getName()).append("\n");});
+	private void createChannelListMessage() {
+		channels.forEach(channel -> channelListMessage.append(channel.getPort()).append("=").append(channel.getName()).append("\n"));
 	}
 
 	private void sendChannelListLength(Socket client) throws IOException {
 		if(client != null) {
-			try(OutputStream clientStream = client.getOutputStream()) {
-				byte[] length = ByteBuffer.allocate(4).putInt(channelListMessage.toString().getBytes().length).array();
-				clientStream.write(length);
-			}
+            byte[] length = ByteBuffer.allocate(4).putInt(channelListMessage.toString().getBytes().length).array();
+            OutputStream clientStream = client.getOutputStream();
+            clientStream.write(length);
 		}
 	}
 
 	private byte[] getUserConfirmation(Socket client) throws IOException {
-		byte[] confirmation = new byte[0];
-		confirmation[0] = 0;
+		byte[] confirmation = new byte[5];
+        fill(confirmation, (byte) 0);
 		if(client != null) {
-			try(InputStream clientStream = client.getInputStream()) {
-				confirmation = new byte[5];
-				clientStream.read(confirmation);
-			}
+            confirmation = new byte[5];
+            InputStream clientStream = client.getInputStream();
+            clientStream.read(confirmation);
 		}
 		return confirmation;
 	}
 
 	private void sendChannelList(Socket client) throws IOException {
 		if(client != null) {
-			try(OutputStream clientStream = client.getOutputStream()) {
-				clientStream.write(channelListMessage.toString().getBytes());
-			}
+            OutputStream clientStream = client.getOutputStream();
+            clientStream.write(channelListMessage.toString().getBytes());
 		}
-		
 	}
 	
 	private void getUserChoose(Socket client) throws IOException {
 		if(client != null) {
-			try(InputStream clientStream = client.getInputStream()) {
-				//Here Piotr send me information about channel and I add him to picked channel.
-			}
+            //Here Piotr send me information about channel and I add him to picked channel.
 		}
 	}
 	
