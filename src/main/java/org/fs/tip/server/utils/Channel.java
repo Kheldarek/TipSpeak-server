@@ -15,20 +15,20 @@ public class Channel implements Runnable {
 	private int bufferLength;
 	private int port;
 	private String name;
-	private List<Client> clients;
+	private ArrayList<Client> clients;
 	private boolean isListining;
 	private ExecutorService exec;
 
 	public Channel() {
-		this(0, "" ,0, Executors.newCachedThreadPool());
+		this(0, "" ,0, Executors.newCachedThreadPool(), new ArrayList<>());
 	}
 	
-	public Channel(int port, String name, int bufferLength, ExecutorService exec) {
+	public Channel(int port, String name, int bufferLength, ExecutorService exec, ArrayList<Client> clients) {
 		this.exec = exec;
 		this.bufferLength = bufferLength;
 		this.port = port;
 		this.name = name;
-		clients = new ArrayList<>(5);
+		this.clients = clients;
 		isListining = true;
 	}
 
@@ -57,6 +57,10 @@ public class Channel implements Runnable {
 			exec.execute(new Multicaster(clients, packet));
 		}
 	}
+
+    private void println(Client client) {
+        System.out.println("Channel " + name + ": " + client.getNickname());
+    }
 	
 	public synchronized void shutdown() {
 		isListining = false;

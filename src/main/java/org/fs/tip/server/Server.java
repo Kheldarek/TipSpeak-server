@@ -40,8 +40,9 @@ public class Server implements Runnable {
 	}
 	
 	public synchronized void openChannel(int port, String channelName, int bufferSize) {
-		Channel channel = new Channel(port, channelName, bufferSize, exec);
-		channels.put(channel, new ArrayList<>());
+        ArrayList<Client> clients = new ArrayList<>();
+		Channel channel = new Channel(port, channelName, bufferSize, exec, clients);
+		channels.put(channel, clients);
 		exec.execute(channel);
 	}
 	
