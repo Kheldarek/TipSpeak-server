@@ -7,6 +7,7 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.fs.tip.server.task.Multicaster;
 
@@ -17,6 +18,10 @@ public class Channel implements Runnable {
 	private List<Client> clients;
 	private boolean isListining;
 	private ExecutorService exec;
+
+	public Channel() {
+		this(0, "" ,0, Executors.newCachedThreadPool());
+	}
 	
 	public Channel(int port, String name, int bufferLength, ExecutorService exec) {
 		this.exec = exec;
@@ -38,7 +43,7 @@ public class Channel implements Runnable {
 		}
 	}
 
-	private void openSocket() throws IOException, SocketException {
+	private void openSocket() throws IOException {
 		try(DatagramSocket datagramSocket = new DatagramSocket(port)) {
 			listen(datagramSocket);
 		}
@@ -65,4 +70,20 @@ public class Channel implements Runnable {
 		return port;
 	}
 
+    public String getSimpleString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(name).append("=").append(port);
+        return sb.toString();
+    }
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(name).append("=").append(port).append(":");
+		for (Client client : clients) {
+			sb.append(client.getNickname()).append(",");
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		return sb.toString();
+	}
 }
