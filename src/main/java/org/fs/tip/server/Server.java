@@ -31,6 +31,7 @@ public class Server implements Runnable {
 			try {
 				System.out.println("Waiting for client... ");
 				client = server.accept();
+				System.out.println("Connected with " + client.getInetAddress().getHostAddress() + ":" + client.getPort());
                 exec.execute(new ClientService(client, channels));
 			} catch(IOException ioe) {
 				System.err.println("Error while working");

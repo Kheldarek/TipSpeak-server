@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by Filip Sochal on 2016-05-31.
  */
 public class ClientService implements Runnable {
+    private String lastCommand = "";
     private StringBuilder channelListMessage;
     private final Socket clientSocket;
     private ConcurrentHashMap<Channel, ArrayList<Client>> channels;
@@ -33,11 +34,59 @@ public class ClientService implements Runnable {
     @Override
     public void run() {
         try {
-            work();
+            //work();
+            procced();
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
+        }
+        /*catch (InterruptedException e) {
             workingFlag = false;
+        }*/
+    }
+
+    public void procced() throws IOException {
+        if(!isHelloCorrect(getLineFromClient())) {
+            writeToClient("DENNIED!\r");
+            return;
+        }
+        while(workingFlag) {
+            String message = getLineFromClient();
+            String[] splittedMessage = message.split(":");
+            switch (splittedMessage[0]) {
+                case "READY!": {
+                    createChannelListMessage();
+                    sendChannelList();
+                    break;
+                }
+                case "LIST_RECEIVED!": {
+                    joinToDefaultIfIsntInAny();
+                    break;
+                }
+                case "CHANGE_CHANNEL": {
+                    changeChannel(splittedMessage[1]);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void changeChannel(String channelName) throws IOException {
+        Channel channel = getChannel(channelName);
+        channels.get(client.getChannel()).remove(client);
+        client.setChannel(channel);
+        channels.get(client.getChannel()).add(client);
+        System.out.println("Sending JOIN!");
+        sendChannelDataToClient(channel);
+        System.out.println("Sent JOIN!");
+        actualizeList();
+    }
+
+    private void joinToDefaultIfIsntInAny() throws IOException {
+        if(client == null) {
+            Channel defaultChannel = getDefaultChannel();
+            joinToDefaultChannel(defaultChannel);
+            sendChannelDataToClient(defaultChannel);
+            actualizeList();
         }
     }
 
@@ -59,7 +108,7 @@ public class ClientService implements Runnable {
                     System.out.println("Joining " + clientSocket.getLocalPort() + "to default channel");
                     Channel defaultChannel = getDefaultChannel();
                     joinToDefaultChannel(defaultChannel);
-                    sendDefaultChannel(defaultChannel);
+                    sendChannelDataToClient(defaultChannel);
                     System.out.println(clientSocket.getLocalPort() + " joined to default channel");
                     actualizeList();
                     System.out.println("Waiting for ready!");
@@ -84,7 +133,7 @@ public class ClientService implements Runnable {
                             client.setChannel(channel);
                             channels.get(client.getChannel()).add(client);
                             System.out.println("Sending JOIN!");
-                            sendDefaultChannel(channel);
+                            sendChannelDataToClient(channel);
                             System.out.println("Sent JOIN!");
                             System.out.println("Waiting for ready!");
                             String message1 = getLineFromClient();
@@ -145,7 +194,7 @@ public class ClientService implements Runnable {
     private void actualizeList() {
         channels.forEach((channel, clients) -> clients.forEach(client -> {
             try {
-                //if(client != this.client)
+                if(client != this.client)
                     writeToClient(client.getSocket(), "ACTUALIZE!\r");
             } catch (IOException e) {
                 e.printStackTrace();
@@ -153,7 +202,7 @@ public class ClientService implements Runnable {
         }));
     }
 
-    private void sendDefaultChannel(Channel defaultChannel) throws IOException {
+    private void sendChannelDataToClient(Channel defaultChannel) throws IOException {
         writeToClient("JOIN:" + defaultChannel.getSimpleString() + "\r");
     }
 
