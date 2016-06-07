@@ -49,6 +49,7 @@ public class ClientService implements Runnable {
             writeToClient("DENNIED!\r");
             return;
         }
+        writeToClient("HELLO!");
         while(workingFlag) {
             String message = getLineFromClient();
             String[] splittedMessage = message.split(":");
