@@ -83,7 +83,7 @@ public class Channel implements Runnable {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(name).append("=").append(port).append(":");
+		sb.append(name).append("=").append(port).append(";");
 		for (Client client : clients) {
 			sb.append(client.getNickname()).append(",");
 		}
