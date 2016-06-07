@@ -46,10 +46,10 @@ public class ClientService implements Runnable {
 
     public void procced() throws IOException {
         if(!isHelloCorrect(getLineFromClient())) {
-            writeToClient("DENNIED!\r");
+            writeToClient("DENIED!\r");
             return;
         }
-        writeToClient("HELLO!");
+        writeToClient("HELLO!\r");
         while(workingFlag) {
             String message = getLineFromClient();
             String[] splittedMessage = message.split(":");
@@ -65,6 +65,10 @@ public class ClientService implements Runnable {
                 }
                 case "CHANGE_CHANNEL": {
                     changeChannel(splittedMessage[1]);
+                    break;
+                }
+                default: {
+                    System.out.println("Unknown command!");
                     break;
                 }
             }
@@ -153,7 +157,7 @@ public class ClientService implements Runnable {
         }
         else {
             System.out.println("Dienied " + clientSocket.getLocalPort() + "!");
-            writeToClient("DENNIED!\r");
+            writeToClient("DENIED!\r");
         }
     }
 
@@ -220,6 +224,7 @@ public class ClientService implements Runnable {
 
     private void createChannelListMessage() {
         channelListMessage = new StringBuilder();
+        channelListMessage.append("LIST:");
         channels.forEachKey(1, channel -> {System.out.println(channel);channelListMessage.append(channel).append("\n");});
         channelListMessage.append("@\r");
     }
