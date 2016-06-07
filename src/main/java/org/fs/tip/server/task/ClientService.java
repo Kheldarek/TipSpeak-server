@@ -16,7 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by Filip Sochal on 2016-05-31.
  */
 public class ClientService implements Runnable {
-    private String lastCommand = "";
     private StringBuilder channelListMessage;
     private final Socket clientSocket;
     private ConcurrentHashMap<Channel, ArrayList<Client>> channels;
@@ -34,17 +33,13 @@ public class ClientService implements Runnable {
     @Override
     public void run() {
         try {
-            //work();
-            procced();
+            proceed();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        /*catch (InterruptedException e) {
-            workingFlag = false;
-        }*/
     }
 
-    public void procced() throws IOException {
+    public void proceed() throws IOException {
         if(!isHelloCorrect(getLineFromClient())) {
             writeToClient("DENIED!\r");
             return;
@@ -95,72 +90,6 @@ public class ClientService implements Runnable {
         }
     }
 
-    public void work() throws IOException, InterruptedException {
-        System.out.println("Checking connection from " + clientSocket.getLocalPort());
-        String hello = getHelloMessage();
-        System.out.println(hello);
-        if(isHelloCorrect(hello)) {
-            sendHelloMessage();
-            System.out.println("Sent HELLO!");
-            System.out.println("Waiting for clientSocket response from " + clientSocket.getLocalPort());
-            if (getUserConfirmation().equals("READY!")) {
-                System.out.println("Sending channel list to clientSocket  from " + clientSocket.getLocalPort());
-                createChannelListMessage();
-                sendChannelList();
-                System.out.println("Sent channel list to " + clientSocket.getLocalPort());
-                System.out.println("Waiting for ack...");
-                if ("LIST_RECEIVED!".equals(getUserChoose())) {
-                    System.out.println("Joining " + clientSocket.getLocalPort() + "to default channel");
-                    Channel defaultChannel = getDefaultChannel();
-                    joinToDefaultChannel(defaultChannel);
-                    sendChannelDataToClient(defaultChannel);
-                    System.out.println(clientSocket.getLocalPort() + " joined to default channel");
-                    actualizeList();
-                    System.out.println("Waiting for ready!");
-                    String message = getLineFromClient();
-                    if("READY!".equals(message)) {
-                        createChannelListMessage();
-                        sendChannelList();
-                        System.out.println("LIST IS SENT!");
-                        if("LIST_RECEIVED!".equals(getLineFromClient())) {
-
-                        }
-                    }
-                    while(workingFlag) {
-                        Thread.sleep(2000);
-                        System.out.println("Reading change_CHANNEL");
-                        String changeMessage = getLineFromClient();
-                        System.out.println("Already read: " + changeMessage);
-                        String[] changeArray = changeMessage.split(":");
-                        if(changeArray[0].equals("CHANGE_CHANNEL")) {
-                            Channel channel = getChannel(changeArray[1]);
-                            channels.get(client.getChannel()).remove(client);
-                            client.setChannel(channel);
-                            channels.get(client.getChannel()).add(client);
-                            System.out.println("Sending JOIN!");
-                            sendChannelDataToClient(channel);
-                            System.out.println("Sent JOIN!");
-                            System.out.println("Waiting for ready!");
-                            String message1 = getLineFromClient();
-                            if("READY!".equals(message1)) {
-                                createChannelListMessage();
-                                sendChannelList();
-                                System.out.println("READY IS DONE!");
-                                if("LIST_RECEIVED!".equals(getLineFromClient())) {
-
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        else {
-            System.out.println("Dienied " + clientSocket.getLocalPort() + "!");
-            writeToClient("DENIED!\r");
-        }
-    }
-
     private boolean isHelloCorrect(String hello) {
         String[] splitted = hello.split(":");
         if(splitted.length != 3) {
@@ -185,11 +114,6 @@ public class ClientService implements Runnable {
         return true;
     }
 
-    public String getHelloMessage() throws IOException {
-        String helloMessage = getLineFromClient();
-        return helloMessage;
-    }
-
     private void joinToDefaultChannel(Channel defaultChannel) {
         ArrayList<Client> list = channels.get(defaultChannel);
         client = new Client(clientSocket.getLocalPort(), clientSocket.getInetAddress(), nickname, clientSocket, defaultChannel);
@@ -211,32 +135,15 @@ public class ClientService implements Runnable {
         writeToClient("JOIN:" + defaultChannel.getSimpleString() + "\r");
     }
 
-    private void sendHelloMessage() throws IOException {
-        writeToClient("HELLO!\r");
-    }
-
-    private String getUserConfirmation() throws IOException {
-        String result = "";
-        result = getLineFromClient();
-        System.out.println("Received response...");
-        return result;
-    }
-
     private void createChannelListMessage() {
         channelListMessage = new StringBuilder();
         channelListMessage.append("LIST:");
-        channels.forEachKey(1, channel -> {System.out.println(channel);channelListMessage.append(channel).append("\n");});
-        channelListMessage.append("@\r");
+        channels.forEachKey(1, channel -> {System.out.println(channel);channelListMessage.append(channel).append("|");});
+        channelListMessage.append("\r");
     }
 
     private void sendChannelList() throws IOException {
         writeToClient(channelListMessage.toString());
-    }
-
-    private String getUserChoose() throws IOException {
-        String result = getLineFromClient();
-        System.out.println("Received response...");
-        return result;
     }
 
     private String getLineFromClient() throws IOException {
